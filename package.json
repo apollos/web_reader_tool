@@ -1,0 +1,28 @@
+{
+  "name": "verified-web-reader",
+  "version": "2.1.0",
+  "private": true,
+  "description": "Passive one-shot browser fallback reader for OpenClaw. Invoked only after native web_fetch fails (403 / anti-bot / JS shell / truncated content).",
+  "type": "module",
+  "engines": {
+    "node": ">=18.17"
+  },
+  "bin": {
+    "verified-browser-read": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && chmod +x dist/cli.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/ws": "^8.5.13",
+    "jsdom": "^26.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

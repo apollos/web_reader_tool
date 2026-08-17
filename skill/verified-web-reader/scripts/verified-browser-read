@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# One-shot launcher for the verified-browser-read CLI.
+# Deployment sets VWR_CLI_JS (or edits the default below) to the absolute
+# path of the built dist/cli.js. No daemon, no listener: the process handles
+# exactly one task and exits.
+set -euo pipefail
+
+# Default: dist/cli.js of a repo checkout two levels above this skill dir.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_CLI="${SCRIPT_DIR}/../../../dist/cli.js"
+
+CLI_JS="${VWR_CLI_JS:-$DEFAULT_CLI}"
+
+if [[ ! -f "$CLI_JS" ]]; then
+  echo "error: verified-browser-read CLI not found at $CLI_JS" >&2
+  echo "hint: build the project (npm run build) and/or set VWR_CLI_JS to the absolute path of dist/cli.js" >&2
+  exit 70
+fi
+
+exec node "$CLI_JS" "$@"

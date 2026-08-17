@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <title>如何评价示例问题？ - 知乎</title>
+</head>
+<body>
+  <header class="AppHeader">导航 首页 会员 发现 等你来答</header>
+
+  <h1 class="QuestionHeader-title">如何评价示例问题？</h1>
+
+  <div class="QuestionAnswer-content">
+    <!-- 反例：另一个回答，带同名“阅读全文”按钮，绝不能被点击 -->
+    <div class="AnswerItem" name="111" data-zop="{&quot;itemId&quot;:111}">
+      <div class="AuthorInfo">
+        <span class="AuthorInfo-name"><a class="UserLink-link" href="/people/other">其他作者</a></span>
+      </div>
+      <div class="RichContent">
+        <div class="RichContent-inner">
+          <span class="RichText">
+            <p>这是另一个回答的开头，它不是目标回答。这个回答也很长，被折叠了…</p>
+          </span>
+        </div>
+        <button id="expand-111" class="ContentItem-expandButton">阅读全文</button>
+      </div>
+      <div class="ContentItem-actions">赞同 100 · 评论 20</div>
+      <a href="/question/999/answer/111">链接</a>
+    </div>
+
+    <!-- 目标回答 -->
+    <div class="AnswerItem" name="222" data-zop="{&quot;itemId&quot;:222}">
+      <div class="AuthorInfo">
+        <span class="AuthorInfo-name"><a class="UserLink-link" href="/people/target">目标作者</a></span>
+      </div>
+      <div class="RichContent">
+        <div class="RichContent-inner">
+          <span class="RichText">
+            <p id="target-collapsed">这是目标回答的前半部分内容，讲述了问题的背景和作者的基本观点…</p>
+          </span>
+        </div>
+        <button id="expand-222" class="ContentItem-expandButton">阅读全文</button>
+      </div>
+      <div class="ContentItem-actions">赞同 999 · 评论 88</div>
+      <div class="Comments-container"><p>热评第一条：说得好！</p></div>
+      <a href="/question/999/answer/222">链接</a>
+    </div>
+  </div>
+
+  <div class="MoreAnswers"><p>更多回答推荐内容不应被抽取。</p></div>
+  <footer>知乎页脚 · 京ICP备xxxx号</footer>
+</body>
+</html>
