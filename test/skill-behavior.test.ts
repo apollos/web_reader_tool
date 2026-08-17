@@ -74,14 +74,22 @@ describe("Skill fallback policy (design §20.3)", () => {
     expect(shouldRetry("unsafe_url", 0)).toBe(false);
   });
 
-  it("uses baseDir and a separate exec env field instead of shell-interpolating the url", () => {
+  it("the skill mandates web_fetch first, honest blockage reporting and browser cleanup", () => {
     const here = path.dirname(fileURLToPath(import.meta.url));
     const skill = fs.readFileSync(
       path.join(here, "..", "skill", "verified-web-reader", "SKILL.md"),
       "utf8",
     );
-    expect(skill).toContain("{baseDir}/scripts/verified-browser-read");
-    expect(skill).toContain("--input-env VWR_READ_INPUT_JSON");
-    expect(skill).not.toMatch(/verified-browser-read read \\\n\s+--url/);
+    // Passive fallback: native web_fetch always comes first.
+    expect(skill).toContain("web_fetch");
+    expect(skill).toMatch(/首先调用 OpenClaw 原生 `web_fetch`/);
+    // Cleanup is unconditional: close the tab, then always stop the browser.
+    expect(skill).toMatch(/一律停止浏览器/);
+    expect(skill).toMatch(/browser stop/);
+    // Honesty rules: no bypassing walls, no impersonating the original.
+    expect(skill).toMatch(/不得.*绕过/s);
+    expect(skill).toMatch(/搜索摘要|转载/);
+    // The built-in browser scheme must not instruct shell-interpolated CLI calls.
+    expect(skill).not.toMatch(/verified-browser-read read .*--url/);
   });
 });
