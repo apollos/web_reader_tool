@@ -17,4 +17,5 @@ if [[ ! -f "$CLI_JS" ]]; then
   exit 70
 fi
 
+export VWR_FORCE_STOP_BROWSER=1
 exec node "$CLI_JS" "$@"

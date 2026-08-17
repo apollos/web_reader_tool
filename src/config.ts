@@ -14,6 +14,13 @@ export interface Config {
   /** CDP HTTP endpoint. Must stay on loopback / private tunnel (design §10.2). */
   cdpUrl: string;
   stopBrowserIfStarted: boolean;
+  /**
+   * Stop the browser after the task even if this run did not start it.
+   * Off by default: stopping a browser someone else started can kill their
+   * session. Only enable when the profile is exclusively used by this tool.
+   * Never applies when the browser status could not be determined.
+   */
+  forceStopBrowser: boolean;
   keepBrowserTab: boolean;
   inlineContentChars: number;
   chunkChars: number;
@@ -67,6 +74,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     browserProfile: get("VWR_BROWSER_PROFILE", "verified-reader"),
     cdpUrl: get("VWR_CDP_URL", "http://127.0.0.1:9222"),
     stopBrowserIfStarted: getBool("VWR_STOP_BROWSER_IF_STARTED", true),
+    forceStopBrowser: getBool("VWR_FORCE_STOP_BROWSER", false),
     keepBrowserTab: getBool("VWR_KEEP_BROWSER_TAB", false),
     inlineContentChars: clampInt("VWR_INLINE_CONTENT_CHARS", 6000, 1, 100_000),
     chunkChars: clampInt("VWR_CHUNK_CHARS", 6000, 1, 100_000),

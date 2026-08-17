@@ -220,16 +220,21 @@ export async function runRead(
       return base("page_mismatch", { final_url: finalRedacted });
     }
 
-    // --- 5. Blockers ---------------------------------------------------------
+    // --- 5. Blockers -----------------------------------------------------------
+    // A homepage redirect is decided from URLs alone and always terminal.
+    // Text-pattern blockers (login/captcha/paywall/error) are only *recorded*
+    // here: many sites overlay a login modal while the full target content is
+    // still present in the DOM. Extraction is attempted first; the blocker
+    // verdict applies only when the content cannot be fully verified.
     const homepage = detectHomepageRedirect(requestedUrl, finalUrl);
-    const blocker = homepage ?? detectBlocker(probe, adapter.blockerRules ?? []);
-    if (blocker) {
-      warnings.push(`blocker detected (${blocker.type}): ${blocker.evidence}`);
-      return base(BLOCKER_STATUS[blocker.type], {
+    if (homepage) {
+      warnings.push(`blocker detected (${homepage.type}): ${homepage.evidence}`);
+      return base(BLOCKER_STATUS[homepage.type], {
         final_url: finalRedacted,
         title: probe.title || null,
       });
     }
+    const blocker = detectBlocker(probe, adapter.blockerRules ?? []);
 
     const finalUrlOk = adapter.verifyFinalUrl(requestedUrl, finalUrl);
 
@@ -241,6 +246,13 @@ export async function runRead(
     };
     let read = await evaluate<PageExtractResult>(extractParams);
     if (!read.found) {
+      if (blocker) {
+        warnings.push(`blocker detected (${blocker.type}): ${blocker.evidence}`);
+        return base(BLOCKER_STATUS[blocker.type], {
+          final_url: finalRedacted,
+          title: read.title ?? (probe.title || null),
+        });
+      }
       warnings.push("target content container not found on page");
       return base("content_not_found", { final_url: finalRedacted, title: read.title });
     }
@@ -316,20 +328,39 @@ export async function runRead(
     };
 
     // §14.3 consistency: browser_verified requires identity ok AND complete.
+    // A blocker pattern on the page does not veto a fully verified read (login
+    // modals often overlay content that is entirely present in the DOM); it
+    // only explains reads that could not be verified.
     let status: ReadStatus;
-    if (!identity.ok) {
+    if (identity.ok && completeness.completeness === "complete") {
+      status = "browser_verified";
+      if (blocker) {
+        warnings.push(
+          `blocker pattern present (${blocker.type}: ${blocker.evidence}) but the full target content was verified`,
+        );
+      }
+    } else if (blocker) {
+      warnings.push(`blocker detected (${blocker.type}): ${blocker.evidence}`);
+      status = BLOCKER_STATUS[blocker.type];
+    } else if (!identity.ok) {
       status = "page_mismatch";
     } else if (completeness.completeness === "none") {
       status = "content_not_found";
-    } else if (completeness.completeness === "complete") {
-      status = "browser_verified";
     } else {
       status = "browser_partial";
     }
 
     // --- 11. Content delivery: inline or chunked -----------------------------
+    // Blocked or mismatched pages never deliver content inline (§14.1): the
+    // agent must report the blockage instead of summarising fragments.
+    const NO_INLINE_CONTENT: ReadStatus[] = [
+      "page_mismatch",
+      "login_required",
+      "captcha",
+      "paywall",
+    ];
     const content = readB.text;
-    let inline: string | null = status === "page_mismatch" ? null : content;
+    let inline: string | null = NO_INLINE_CONTENT.includes(status) ? null : content;
     let chunkInfo: { content_handle: string; chunk_count: number; expires_at: string } | null =
       null;
     if (inline !== null && content.length > config.inlineContentChars) {
@@ -385,10 +416,15 @@ export async function runRead(
         }
       }
     }
+    // Force-stop only applies when the browser status was positively known
+    // (was_running_before === true) or we started it ourselves; an unknown
+    // status must never lead to a stop (§10).
+    const forceStop =
+      config.forceStopBrowser &&
+      (lifecycle.was_running_before === true || lifecycle.started_by_this_run);
     if (
-      lifecycle.started_by_this_run &&
-      config.stopBrowserIfStarted &&
-      client.canManageLifecycle
+      client.canManageLifecycle &&
+      ((lifecycle.started_by_this_run && config.stopBrowserIfStarted) || forceStop)
     ) {
       try {
         refreshProfileLock();

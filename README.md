@@ -59,6 +59,7 @@ JSON 的 `status` 字段）；`64` 输入无效；`70` 无法生成结构化结�
 | `VWR_BROWSER_PROFILE` | `verified-reader` | 专用浏览器 profile，与个人浏览器隔离 |
 | `VWR_CDP_URL` | `http://127.0.0.1:9222` | CDP HTTP 端点；只允许回环/私网/SSH 隧道 |
 | `VWR_STOP_BROWSER_IF_STARTED` | `1` | 浏览器由本次任务启动时，任务结束后停止该 profile |
+| `VWR_FORCE_STOP_BROWSER` | `0` | 任务结束后停止浏览器，即使它不是本次任务启动的。仅当该 profile 只被本工具使用时才可开启：会终止其他调用方正在使用的同名 profile 会话。状态未知时永远不停止 |
 | `VWR_KEEP_BROWSER_TAB` | `0` | 调试用；保留任务标签页（会产生 warning） |
 | `VWR_INLINE_CONTENT_CHARS` | `6000` | 超过此长度的正文走临时分块 |
 | `VWR_CHUNK_CHARS` | `6000` | 单个分块字符数 |

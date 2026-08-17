@@ -149,6 +149,46 @@ describe("browser lifecycle (design §20.2)", () => {
     expect(result.browser_lifecycle.started_by_this_run).toBe(false);
   });
 
+  it("force-stops an externally started browser when VWR_FORCE_STOP_BROWSER=1", async () => {
+    const mock = new MockClient();
+    mock.statusResult = { running: true };
+    const config = loadConfig({
+      VWR_STABLE_READ_INTERVAL_MS: "0",
+      VWR_MAX_SCROLLS: "1",
+      VWR_MAX_EXPANDS: "0",
+      VWR_MIN_CONTENT_CHARS: "50",
+      VWR_FORCE_STOP_BROWSER: "1",
+    });
+    const result = await runRead(
+      { url: "https://example.com/article/123" },
+      config,
+      { createClient: () => mock, ...deps },
+    );
+    expect(mock.starts).toBe(0);
+    expect(mock.stops).toBe(1);
+    expect(result.browser_lifecycle.was_running_before).toBe(true);
+    expect(result.browser_lifecycle.started_by_this_run).toBe(false);
+    expect(result.browser_lifecycle.browser_stopped).toBe(true);
+  });
+
+  it("never force-stops when the browser status is unknown", async () => {
+    const mock = new MockClient();
+    mock.statusResult = { running: null, detail: "gateway flake" };
+    const config = loadConfig({
+      VWR_STABLE_READ_INTERVAL_MS: "0",
+      VWR_MIN_CONTENT_CHARS: "50",
+      VWR_FORCE_STOP_BROWSER: "1",
+    });
+    const result = await runRead(
+      { url: "https://example.com/article/123" },
+      config,
+      { createClient: () => mock, ...deps },
+    );
+    expect(result.status).toBe("browser_unavailable");
+    expect(mock.stops).toBe(0);
+    expect(result.browser_lifecycle.browser_stopped).toBe(false);
+  });
+
   it("closes the tab when extraction throws", async () => {
     const mock = new MockClient();
     mock.statusResult = { running: true };
